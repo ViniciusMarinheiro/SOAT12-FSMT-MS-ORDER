@@ -1,0 +1,110 @@
+name: NestJS CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  # PREENCHA COM SEUS DADOS REAIS AQUI
+  ACR_NAME: "soat12acr"           
+  RESOURCE_GROUP: "SOAT12-FSMT-RG"
+  CLUSTER_NAME: "SOAT12-FSMT-AKS" 
+
+jobs:
+  # ========================================================
+  # ESTÁGIO 1: CI & QUALIDADE
+  # ========================================================
+  ci-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint Code
+        run: npm run lint
+
+      # Requisito PDF: Testes automatizados e cobertura (min 80%)
+      - name: Run Unit Tests with Coverage
+        run: npm run test:cov
+
+  # ========================================================
+  # ESTÁGIO 2: BUILD E PUSH (Docker)
+  # ========================================================
+  build-push:
+    needs: ci-quality
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_NAME=${{ github.event.repository.name }}
+          ACR_URL="${{ env.ACR_NAME }}.azurecr.io"
+          
+          docker build . -t $ACR_URL/$IMAGE_NAME:${{ github.sha }}
+          docker build . -t $ACR_URL/$IMAGE_NAME:latest
+          
+          docker push $ACR_URL/$IMAGE_NAME:${{ github.sha }}
+          docker push $ACR_URL/$IMAGE_NAME:latest
+
+  # ========================================================
+  # ESTÁGIO 3: DEPLOY NO KUBERNETES (AKS)
+  # ========================================================
+  deploy-aks:
+    needs: build-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Get AKS Credentials
+        run: az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }}
+
+      - name: Update Kubernetes Manifests and Deploy
+        run: |
+          cd k8s
+          
+          IMAGE_FULL_PATH="${{ env.ACR_NAME }}.azurecr.io/${{ github.event.repository.name }}:${{ github.sha }}"
+          
+          # Atualiza a imagem no deployment.yaml
+          sed -i "s|IMAGE_PLACEHOLDER|$IMAGE_FULL_PATH|g" deployment.yaml
+          
+          # Aplica TODOS os arquivos da pasta (incluindo rabbitmq.yaml)
+          kubectl apply -f .
