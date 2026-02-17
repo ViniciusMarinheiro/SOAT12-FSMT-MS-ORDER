@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { WorkOrder } from './work-order.entity';
 
 @Entity('work_order_parts')
@@ -19,5 +25,6 @@ export class WorkOrderPart {
   totalPrice: number;
 
   @ManyToOne(() => WorkOrder, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'work_order_id' })
   workOrder: WorkOrder;
 }

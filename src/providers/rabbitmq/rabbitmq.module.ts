@@ -9,7 +9,7 @@ import { getRabbitMQConfigs } from './rabbitmq.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WorkOrder } from '@/modules/work-orders/infrastructure/database/work-order.entity';
 import { WorkOrderStatusLog } from '@/modules/work-orders/infrastructure/database/work-order-status-log.entity';
-import { WorkOrderQueueProvider } from './work-order-queue.provider';
+import { WorkOrderQueueProvider } from './providers/work-order-queue.provider';
 
 @Module({
   imports: [

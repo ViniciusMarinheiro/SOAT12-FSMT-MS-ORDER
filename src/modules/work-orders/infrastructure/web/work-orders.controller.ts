@@ -1,5 +1,10 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateWorkOrderDto } from '../../application/dtos/create-work-order.dto';
 import { UpdateWorkOrderStatusDto } from '../../application/dtos/update-work-order-status.dto';
 import { CreateWorkOrderUseCase } from '../../application/use-cases/create-work-order.use-case';
@@ -9,6 +14,7 @@ import { GetWorkOrderHistoryUseCase } from '../../application/use-cases/get-work
 
 @ApiTags('work-orders')
 @Controller('work-orders')
+@ApiBearerAuth('Bearer')
 export class WorkOrdersController {
   constructor(
     private readonly createWorkOrderUseCase: CreateWorkOrderUseCase,

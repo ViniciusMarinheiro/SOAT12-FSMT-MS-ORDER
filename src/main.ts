@@ -13,7 +13,7 @@ async function bootstrap() {
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
   });
 
-  app.useLogger(app.get(CustomLogger));
+  // app.useLogger(app.get(CustomLogger));
 
   const logger = new Logger('MAIN');
 

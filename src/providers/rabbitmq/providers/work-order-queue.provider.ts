@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { rabbitMQConfig } from './rabbitmq.config';
+import { rabbitMQConfig } from '../rabbitmq.config';
 
 export interface SendToProductionPayload {
   workOrderId: number;

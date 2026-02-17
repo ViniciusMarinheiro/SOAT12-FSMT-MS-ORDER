@@ -12,11 +12,6 @@ export class WorkOrderServiceDto {
   @IsInt()
   @Min(1)
   quantity: number;
-
-  @ApiProperty()
-  @IsInt()
-  @Min(0)
-  totalPrice: number;
 }
 
 export class WorkOrderPartDto {
@@ -29,11 +24,6 @@ export class WorkOrderPartDto {
   @IsInt()
   @Min(1)
   quantity: number;
-
-  @ApiProperty()
-  @IsInt()
-  @Min(0)
-  totalPrice: number;
 }
 
 export class CreateWorkOrderDto {
@@ -52,11 +42,6 @@ export class CreateWorkOrderDto {
   @Min(1)
   userId: number;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  hashView?: string;
-
   @ApiProperty({ required: false, type: [WorkOrderServiceDto] })
   @IsOptional()
   @IsArray()
@@ -70,9 +55,4 @@ export class CreateWorkOrderDto {
   @ValidateNested({ each: true })
   @Type(() => WorkOrderPartDto)
   parts?: WorkOrderPartDto[];
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsInt()
-  totalAmount?: number;
 }

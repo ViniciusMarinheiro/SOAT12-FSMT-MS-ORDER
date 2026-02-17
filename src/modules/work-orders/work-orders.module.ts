@@ -10,6 +10,8 @@ import { UpdateWorkOrderStatusUseCase } from './application/use-cases/update-wor
 import { GetWorkOrderStatusUseCase } from './application/use-cases/get-work-order-status.use-case';
 import { GetWorkOrderHistoryUseCase } from './application/use-cases/get-work-order-history.use-case';
 import { RabbitMQModule } from '@/providers/rabbitmq/rabbitmq.module';
+import { ReferencesModule } from '@/modules/references/references.module';
+import { ApiHttpModule } from '@/providers/http/api-http.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { RabbitMQModule } from '@/providers/rabbitmq/rabbitmq.module';
       WorkOrderPart,
     ]),
     RabbitMQModule,
+    ReferencesModule,
+    ApiHttpModule,
   ],
   controllers: [WorkOrdersController],
   providers: [

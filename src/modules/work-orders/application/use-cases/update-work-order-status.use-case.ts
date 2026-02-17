@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { WorkOrder } from '../../infrastructure/database/work-order.entity';
 import { WorkOrderStatusLog } from '../../infrastructure/database/work-order-status-log.entity';
 import { WorkOrderStatusEnum } from '../../domain/enums/work-order-status.enum';
-import { WorkOrderQueueProvider } from '@/providers/rabbitmq/work-order-queue.provider';
+import { WorkOrderQueueProvider } from '@/providers/rabbitmq/providers/work-order-queue.provider';
 
 @Injectable()
 export class UpdateWorkOrderStatusUseCase {
