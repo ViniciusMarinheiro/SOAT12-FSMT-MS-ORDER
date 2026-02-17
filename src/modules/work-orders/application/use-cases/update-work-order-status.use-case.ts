@@ -30,7 +30,11 @@ export class UpdateWorkOrderStatusUseCase {
 
     await this.workOrderRepo.update(id, { status });
     await this.statusLogRepo.save(
-      this.statusLogRepo.create({ workOrderId: id, status }),
+      this.statusLogRepo.create({
+        workOrderId: id,
+        status,
+        startedAt: new Date(),
+      }),
     );
 
     if (status === WorkOrderStatusEnum.FINISHED) {

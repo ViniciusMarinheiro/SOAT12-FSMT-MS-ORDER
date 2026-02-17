@@ -24,7 +24,7 @@ export class RabbitMQController {
       this.envConfigService.get('DLQ_REPUBLISH_TO_MAIN') || false;
   }
 
-  @EventPattern()
+  @EventPattern('status-update')
   async handleMessage(@Payload() data: any, @Ctx() context: RmqContext) {
     const channel = context.getChannelRef();
     const originalMessage = context.getMessage();

@@ -34,7 +34,6 @@ export class CreateWorkOrderUseCase {
   async execute(dto: CreateWorkOrderDto) {
     this.logger.log('Criando ordem de serviço', dto);
 
-    // Validar estoque antes de criar a OS
     await this.stockValidationService.validateWorkOrderItems(dto);
 
     const queryRunner = this.dataSource.createQueryRunner();
