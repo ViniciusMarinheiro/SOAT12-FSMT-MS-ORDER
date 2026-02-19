@@ -56,6 +56,8 @@ const config: Config = {
     'src/providers/rabbitmq/rabbitmq.config.ts',
     'src/providers/rabbitmq/providers/',
     'src/providers/rabbitmq/strategy/handleMessageStrategy.service.ts',
+    'src/providers/rabbitmq/saga/saga.types.ts',
+    'src/providers/rabbitmq/saga/saga-events.provider.ts',
     '.*\\.spec\\.ts$',
     '.*\\.test\\.ts$',
     '.*\\.e2e-spec\\.ts$',

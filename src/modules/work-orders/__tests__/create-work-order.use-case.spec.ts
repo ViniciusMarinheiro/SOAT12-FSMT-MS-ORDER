@@ -17,6 +17,7 @@ describe('CreateWorkOrderUseCase', () => {
   let workOrderRepo: jest.Mocked<Repository<WorkOrder>>;
   let stockValidationService: jest.Mocked<StockValidationService>;
   let apiHttpService: jest.Mocked<ApiHttpService>;
+  let sagaEventsProvider: { publishWorkOrderCreated: jest.Mock; publishCompensate: jest.Mock };
   let queryRunner: any;
 
   const mockSavedWorkOrder = {
@@ -68,6 +69,7 @@ describe('CreateWorkOrderUseCase', () => {
     };
     const mockSagaEventsProvider = {
       publishWorkOrderCreated: jest.fn().mockResolvedValue(undefined),
+      publishCompensate: jest.fn().mockResolvedValue(undefined),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -97,6 +99,7 @@ describe('CreateWorkOrderUseCase', () => {
     workOrderRepo = module.get(getRepositoryToken(WorkOrder));
     stockValidationService = module.get(StockValidationService);
     apiHttpService = module.get(ApiHttpService);
+    sagaEventsProvider = module.get(SagaEventsProvider) as any;
   });
 
   afterEach(() => {
@@ -168,5 +171,26 @@ describe('CreateWorkOrderUseCase', () => {
 
     expect(apiHttpService.getServicesByIds).toHaveBeenCalledWith([1]);
     expect(apiHttpService.getPartsByIds).toHaveBeenCalledWith([2]);
+  });
+
+  it('should call publishCompensate and rethrow when publishWorkOrderCreated fails', async () => {
+    const dto: CreateWorkOrderDto = {
+      customerId: 1,
+      vehicleId: 1,
+      userId: 1,
+    };
+    workOrderRepo.find.mockResolvedValue([]);
+    queryRunner.manager.save
+      .mockResolvedValueOnce(mockSavedWorkOrder)
+      .mockResolvedValueOnce({});
+    sagaEventsProvider.publishWorkOrderCreated.mockRejectedValue(new Error('Saga emit failed'));
+
+    await expect(useCase.execute(dto)).rejects.toThrow('Saga emit failed');
+    expect(sagaEventsProvider.publishCompensate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workOrderId: 1,
+        reason: 'Saga emit failed',
+      }),
+    );
   });
 });
