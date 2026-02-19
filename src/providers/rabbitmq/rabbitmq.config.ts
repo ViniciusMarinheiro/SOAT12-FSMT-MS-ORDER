@@ -34,13 +34,48 @@ export const rabbitMQConfig: Record<string, RabbitMQConfig> = {
     strategyKey: 'productionStatusUpdate',
     isConsumer: true,
   },
+
+  sagaPublish: {
+    exchange: 'saga.v1',
+    queue: 'saga.v1.order.publish',
+    routingKey: 'saga.publish',
+    deadLetterExchange: 'saga.v1.dlq',
+    deadLetterRoutingKey: 'saga.publish.dlq',
+    isConsumer: false,
+  },
+  sagaWorkOrderCreated: {
+    exchange: 'saga.v1',
+    queue: 'saga.v1.order.created',
+    routingKey: 'work_order.created',
+    deadLetterExchange: 'saga.v1.dlq',
+    deadLetterRoutingKey: 'order.created.dlq',
+    strategyKey: 'sagaWorkOrderCreated',
+    isConsumer: true,
+  },
+  sagaWorkOrderBudgetGenerated: {
+    exchange: 'saga.v1',
+    queue: 'saga.v1.order.budget_generated',
+    routingKey: 'work_order.budget_generated',
+    deadLetterExchange: 'saga.v1.dlq',
+    deadLetterRoutingKey: 'order.budget_generated.dlq',
+    strategyKey: 'sagaWorkOrderBudgetGenerated',
+    isConsumer: true,
+  },
+  sagaCompensateOrder: {
+    exchange: 'saga.v1',
+    queue: 'saga.v1.compensate.order',
+    routingKey: 'compensate',
+    deadLetterExchange: 'saga.v1.dlq',
+    deadLetterRoutingKey: 'compensate.order.dlq',
+    strategyKey: 'sagaCompensateOrder',
+    isConsumer: true,
+  },
 };
 
 export const getRabbitMQConfigs = (): RabbitMQConfig[] => {
   return Object.values(rabbitMQConfig);
 };
 
-/** Retorna apenas configs em que este serviço é consumer (para connectMicroservices). */
 export const getConsumerConfigs = (): RabbitMQConfig[] => {
   return getRabbitMQConfigs().filter((c) => c.isConsumer !== false);
 };

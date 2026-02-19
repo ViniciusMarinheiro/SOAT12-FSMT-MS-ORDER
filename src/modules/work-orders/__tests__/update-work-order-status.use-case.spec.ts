@@ -7,12 +7,14 @@ import { WorkOrder } from '../infrastructure/database/work-order.entity';
 import { WorkOrderStatusLog } from '../infrastructure/database/work-order-status-log.entity';
 import { WorkOrderStatusEnum } from '../domain/enums/work-order-status.enum';
 import { WorkOrderQueueProvider } from '@/providers/rabbitmq/providers/work-order-queue.provider';
+import { SagaEventsProvider } from '@/providers/rabbitmq/saga/saga-events.provider';
 
 describe('UpdateWorkOrderStatusUseCase', () => {
   let useCase: UpdateWorkOrderStatusUseCase;
   let workOrderRepo: jest.Mocked<Repository<WorkOrder>>;
   let statusLogRepo: jest.Mocked<Repository<WorkOrderStatusLog>>;
   let workOrderQueueProvider: jest.Mocked<WorkOrderQueueProvider>;
+  let sagaEventsProvider: jest.Mocked<SagaEventsProvider>;
 
   const mockWorkOrder = {
     id: 1,
@@ -35,6 +37,9 @@ describe('UpdateWorkOrderStatusUseCase', () => {
     const mockQueueProvider = {
       sendToProduction: jest.fn().mockResolvedValue(undefined),
     };
+    const mockSagaEventsProvider = {
+      publishCompensate: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -45,6 +50,7 @@ describe('UpdateWorkOrderStatusUseCase', () => {
           useValue: mockStatusLogRepo,
         },
         { provide: WorkOrderQueueProvider, useValue: mockQueueProvider },
+        { provide: SagaEventsProvider, useValue: mockSagaEventsProvider },
       ],
     }).compile();
 
@@ -52,6 +58,7 @@ describe('UpdateWorkOrderStatusUseCase', () => {
     workOrderRepo = module.get(getRepositoryToken(WorkOrder));
     statusLogRepo = module.get(getRepositoryToken(WorkOrderStatusLog));
     workOrderQueueProvider = module.get(WorkOrderQueueProvider);
+    sagaEventsProvider = module.get(SagaEventsProvider);
   });
 
   afterEach(() => {
@@ -147,7 +154,7 @@ describe('UpdateWorkOrderStatusUseCase', () => {
     expect(workOrderQueueProvider.sendToProduction).not.toHaveBeenCalled();
   });
 
-  it('should not throw when sendToProduction fails (only logs)', async () => {
+  it('should call publishCompensate and rethrow when sendToProduction fails', async () => {
     workOrderRepo.findOne
       .mockResolvedValueOnce(mockWorkOrder)
       .mockResolvedValueOnce({
@@ -158,10 +165,15 @@ describe('UpdateWorkOrderStatusUseCase', () => {
       new Error('Queue error'),
     );
 
-    const result = await useCase.execute(1, WorkOrderStatusEnum.IN_PROGRESS);
+    await expect(
+      useCase.execute(1, WorkOrderStatusEnum.IN_PROGRESS),
+    ).rejects.toThrow('Queue error');
 
-    expect(result).toBeDefined();
-    expect(result).not.toBeNull();
-    expect(result!.status).toBe(WorkOrderStatusEnum.IN_PROGRESS);
+    expect(sagaEventsProvider.publishCompensate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workOrderId: 1,
+        reason: 'Queue error',
+      }),
+    );
   });
 });

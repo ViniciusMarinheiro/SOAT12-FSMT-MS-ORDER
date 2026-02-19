@@ -8,6 +8,7 @@ import { WorkOrderService } from '../infrastructure/database/work-order-service.
 import { WorkOrderPart } from '../infrastructure/database/work-order-part.entity';
 import { StockValidationService } from '@/modules/references/application/services/stock-validation.service';
 import { ApiHttpService } from '@/providers/http/api-http.service';
+import { SagaEventsProvider } from '@/providers/rabbitmq/saga/saga-events.provider';
 import { CreateWorkOrderDto } from '../application/dtos/create-work-order.dto';
 import { WorkOrderStatusEnum } from '../domain/enums/work-order-status.enum';
 
@@ -65,6 +66,9 @@ describe('CreateWorkOrderUseCase', () => {
       getServicesByIds: jest.fn().mockResolvedValue([]),
       getPartsByIds: jest.fn().mockResolvedValue([]),
     };
+    const mockSagaEventsProvider = {
+      publishWorkOrderCreated: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -85,6 +89,7 @@ describe('CreateWorkOrderUseCase', () => {
         { provide: DataSource, useValue: mockDataSource },
         { provide: StockValidationService, useValue: mockStockValidation },
         { provide: ApiHttpService, useValue: mockApiHttp },
+        { provide: SagaEventsProvider, useValue: mockSagaEventsProvider },
       ],
     }).compile();
 

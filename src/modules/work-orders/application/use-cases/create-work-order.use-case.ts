@@ -10,6 +10,8 @@ import { WorkOrderStatusEnum } from '../../domain/enums/work-order-status.enum';
 import { CreateWorkOrderDto } from '../dtos/create-work-order.dto';
 import { StockValidationService } from '@/modules/references/application/services/stock-validation.service';
 import { ApiHttpService } from '@/providers/http/api-http.service';
+import { SagaEventsProvider } from '@/providers/rabbitmq/saga/saga-events.provider';
+import { SagaWorkOrderStep } from '@/providers/rabbitmq/saga/saga.types';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -29,6 +31,7 @@ export class CreateWorkOrderUseCase {
     private readonly dataSource: DataSource,
     private readonly stockValidationService: StockValidationService,
     private readonly apiHttpService: ApiHttpService,
+    private readonly sagaEvents: SagaEventsProvider,
   ) {}
 
   async execute(dto: CreateWorkOrderDto) {
@@ -148,6 +151,28 @@ export class CreateWorkOrderUseCase {
       }
 
       await queryRunner.commitTransaction();
+
+      try {
+        await this.sagaEvents.publishWorkOrderCreated({
+          workOrderId: savedWorkOrder.id,
+          customerId: savedWorkOrder.customerId,
+          vehicleId: savedWorkOrder.vehicleId,
+          protocol: savedWorkOrder.protocol,
+          totalAmount: savedWorkOrder.totalAmount,
+        });
+      } catch (sagaError: any) {
+        this.logger.error('Falha ao publicar evento saga work_order.created; disparando compensação', {
+          workOrderId: savedWorkOrder.id,
+          error: sagaError?.message,
+        });
+        await this.sagaEvents.publishCompensate({
+          sagaId: crypto.randomUUID(),
+          workOrderId: savedWorkOrder.id,
+          step: SagaWorkOrderStep.CREATE,
+          reason: sagaError?.message,
+        });
+        throw sagaError;
+      }
 
       this.logger.log('Ordem de serviço criada com sucesso', {
         id: savedWorkOrder.id,

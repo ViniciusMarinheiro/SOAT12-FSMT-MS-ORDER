@@ -52,7 +52,7 @@ export class ApiHttpService extends BaseApiHttpService {
       }
 
       throw new BadRequestException(
-        `Erro ao buscar peça: ${error?.response?.data?.message || error.message}`,
+        `Erro ao buscar peça na API externa: ${error?.response?.data?.message || error.message}`,
       );
     }
   }
