@@ -25,6 +25,8 @@ export interface SagaWorkOrderCreatedPayload extends SagaContext {
 
 export interface SagaWorkOrderBudgetGeneratedPayload extends SagaContext {
   totalAmount: number;
+  /** Email do cliente para envio do link de pagamento (opcional) */
+  customerEmail?: string;
 }
 
 export interface SagaWorkOrderAwaitingApprovalPayload extends SagaContext {}

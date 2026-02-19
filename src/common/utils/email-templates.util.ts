@@ -1,34 +1,34 @@
 export interface EmailTemplateData {
-  workOrderId: number
-  totalAmount: number
-  customerName?: string
-  vehiclePlate?: string
+  workOrderId: number;
+  totalAmount: number;
+  customerName?: string;
+  vehiclePlate?: string;
   services?: Array<{
-    serviceName: string
-    quantity: number
-    totalPrice: number
-  }>
+    serviceName: string;
+    quantity: number;
+    totalPrice: number;
+  }>;
   parts?: Array<{
-    partName: string
-    quantity: number
-    totalPrice: number
-  }>
+    partName: string;
+    quantity: number;
+    totalPrice: number;
+  }>;
 }
 
 export interface EmailTemplateConfig {
-  title: string
-  titleColor: string
-  borderColor: string
-  highlightColor: string
-  highlightBackgroundColor: string
-  highlightText: string
-  description: string
-  detailsTitle: string
-  details: string
-  actionTitle?: string
-  actionText?: string
-  footerText: string
-  footerEmoji: string
+  title: string;
+  titleColor: string;
+  borderColor: string;
+  highlightColor: string;
+  highlightBackgroundColor: string;
+  highlightText: string;
+  description: string;
+  detailsTitle: string;
+  details: string;
+  actionTitle?: string;
+  actionText?: string;
+  footerText: string;
+  footerEmoji: string;
 }
 
 export class EmailTemplatesUtil {
@@ -48,7 +48,7 @@ export class EmailTemplatesUtil {
         quantity: part.quantity,
         totalPrice: part.totalPrice,
       })),
-    }
+    };
   }
 
   private static getBaseTemplate(
@@ -93,7 +93,7 @@ export class EmailTemplatesUtil {
         </p>
       </div>
     </div>
-    `
+    `;
   }
 
   static generateFinishedTemplate(data: EmailTemplateData): string {
@@ -116,9 +116,9 @@ export class EmailTemplatesUtil {
       actionText: 'Dirija-se ao local para retirar seu veículo',
       footerText: 'Obrigado por escolher nossos serviços!',
       footerEmoji: '🚀',
-    }
+    };
 
-    return this.getBaseTemplate(config, data)
+    return this.getBaseTemplate(config, data);
   }
 
   static generateInProgressCustomerTemplate(data: EmailTemplateData): string {
@@ -142,9 +142,9 @@ export class EmailTemplatesUtil {
         'Você será notificado automaticamente quando o serviço for finalizado',
       footerText: 'Estamos trabalhando para você!',
       footerEmoji: '🚗💨',
-    }
+    };
 
-    return this.getBaseTemplate(config, data)
+    return this.getBaseTemplate(config, data);
   }
 
   static generateInProgressUserTemplate(data: EmailTemplateData): string {
@@ -168,12 +168,15 @@ export class EmailTemplatesUtil {
       actionText: 'Execute os serviços conforme especificado na ordem',
       footerText: 'Bom trabalho!',
       footerEmoji: '💪🔧',
-    }
+    };
 
-    return this.getBaseTemplate(config, data)
+    return this.getBaseTemplate(config, data);
   }
 
-  static generateAwaitingApprovalTemplate(data: EmailTemplateData): string {
+  static generateAwaitingApprovalTemplate(
+    data: EmailTemplateData,
+    paymentLink?: string,
+  ): string {
     const servicesHtml =
       data.services
         ?.map(
@@ -184,7 +187,7 @@ export class EmailTemplatesUtil {
         </div>
       `,
         )
-        .join('') || ''
+        .join('') || '';
 
     const partsHtml =
       data.parts
@@ -196,7 +199,7 @@ export class EmailTemplatesUtil {
         </div>
       `,
         )
-        .join('') || ''
+        .join('') || '';
 
     const config: EmailTemplateConfig = {
       title: `🚗 Ordem de Serviço #${data.workOrderId} - Aguardando Aprovação`,
@@ -224,13 +227,24 @@ export class EmailTemplatesUtil {
           <h3 style="margin: 0 0 10px 0; font-size: 20px;">💰 Valor Total</h3>
           <p style="font-size: 24px; font-weight: bold; margin: 0; color: #f39c12;">R$ ${data.totalAmount}</p>
         </div>
+        ${
+          paymentLink
+            ? `
+        <div style="background-color: #27ae60; color: #ffffff; padding: 20px; border-radius: 6px; text-align: center; margin-top: 20px;">
+          <h3 style="margin: 0 0 15px 0; font-size: 18px;">💳 Aprovar e Pagar</h3>
+          <p style="margin: 0 0 15px 0; font-size: 14px;">Clique no botão abaixo para realizar o pagamento e aprovar a ordem de serviço:</p>
+          <a href="${paymentLink}" style="display: inline-block; background-color: #2c3e50; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Pagar com Mercado Pago</a>
+        </div>
+        `
+            : ''
+        }
       `,
       footerText:
         'Este é um email automático. Em caso de dúvidas, entre em contato conosco.',
       footerEmoji: '',
-    }
+    };
 
-    return this.getBaseTemplate(config, data)
+    return this.getBaseTemplate(config, data);
   }
 
   static generateDeliveredTemplate(data: EmailTemplateData): string {
@@ -255,9 +269,9 @@ export class EmailTemplatesUtil {
         'Foi um prazer atendê-lo e esperamos vê-lo novamente em breve!',
       footerText: 'Obrigado por escolher nossos serviços!',
       footerEmoji: '🚀💜',
-    }
+    };
 
-    const baseTemplate = this.getBaseTemplate(config, data)
+    const baseTemplate = this.getBaseTemplate(config, data);
 
     // Adicionar seção de avaliação específica para o template de entrega
     const evaluationSection = `
@@ -277,12 +291,12 @@ export class EmailTemplatesUtil {
           Estamos sempre à disposição para ajudá-lo
         </p>
       </div>
-    `
+    `;
 
     return baseTemplate.replace(
       '<p style="color: #7f8c8d; font-size: 14px; text-align: center; margin-top: 25px; border-top: 1px solid #ecf0f1; padding-top: 20px;">',
       evaluationSection +
         '<p style="color: #7f8c8d; font-size: 14px; text-align: center; margin-top: 25px; border-top: 1px solid #ecf0f1; padding-top: 20px;">',
-    )
+    );
   }
 }

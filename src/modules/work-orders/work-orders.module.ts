@@ -32,5 +32,6 @@ import { ApiHttpModule } from '@/providers/http/api-http.module';
     GetWorkOrderStatusUseCase,
     GetWorkOrderHistoryUseCase,
   ],
+  exports: [UpdateWorkOrderStatusUseCase],
 })
 export class WorkOrdersModule {}

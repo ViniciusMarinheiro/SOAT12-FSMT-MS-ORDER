@@ -39,6 +39,7 @@ export const envSchema = z
     LAMBDA_FUNCTION_URL: z.string().optional(),
     LAMBDA_JWT_SECRET: z.string(),
     API_BASE_URL: z.string().optional().default('http://localhost:3333'),
+    PAYMENT_SERVICE_URL: z.string().optional().default('http://localhost:3000'),
   })
   .transform((env) => ({
     ...env,

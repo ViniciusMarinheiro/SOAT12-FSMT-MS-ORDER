@@ -4,6 +4,7 @@ import { ProductionStatusUpdateStrategy } from './productionStatusUpdateStrategy
 import { SagaWorkOrderCreatedStrategy } from './sagaWorkOrderCreatedStrategy.service';
 import { SagaWorkOrderBudgetGeneratedStrategy } from './sagaWorkOrderBudgetGeneratedStrategy.service';
 import { SagaCompensateOrderStrategy } from './sagaCompensateOrderStrategy.service';
+import { PaymentApprovedStrategy } from './paymentApprovedStrategy.service';
 import { rabbitMQConfig } from '../rabbitmq.config';
 
 @Injectable()
@@ -17,12 +18,14 @@ export class HandleMessageStrategyFactory {
     private sagaWorkOrderCreatedStrategy: SagaWorkOrderCreatedStrategy,
     private sagaWorkOrderBudgetGeneratedStrategy: SagaWorkOrderBudgetGeneratedStrategy,
     private sagaCompensateOrderStrategy: SagaCompensateOrderStrategy,
+    private paymentApprovedStrategy: PaymentApprovedStrategy,
   ) {
     this.strategyMap = {
       productionStatusUpdate: this.productionStatusUpdateStrategy,
       sagaWorkOrderCreated: this.sagaWorkOrderCreatedStrategy,
       sagaWorkOrderBudgetGenerated: this.sagaWorkOrderBudgetGeneratedStrategy,
       sagaCompensateOrder: this.sagaCompensateOrderStrategy,
+      paymentApproved: this.paymentApprovedStrategy,
     };
 
     Object.values(rabbitMQConfig).forEach((config) => {

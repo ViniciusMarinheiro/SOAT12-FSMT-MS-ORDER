@@ -70,6 +70,23 @@ export const rabbitMQConfig: Record<string, RabbitMQConfig> = {
     strategyKey: 'sagaCompensateOrder',
     isConsumer: true,
   },
+  sendEmail: {
+    exchange: 'email.v1',
+    queue: 'email.v1.send',
+    routingKey: 'send',
+    deadLetterExchange: 'email.v1.dlq',
+    deadLetterRoutingKey: 'send.dlq',
+    isConsumer: false,
+  },
+  paymentApproved: {
+    exchange: 'payment.v1',
+    queue: 'payment.v1.approved',
+    routingKey: 'payment.approved',
+    deadLetterExchange: 'payment.v1.dlq',
+    deadLetterRoutingKey: 'payment.approved.dlq',
+    strategyKey: 'paymentApproved',
+    isConsumer: true,
+  },
 };
 
 export const getRabbitMQConfigs = (): RabbitMQConfig[] => {
