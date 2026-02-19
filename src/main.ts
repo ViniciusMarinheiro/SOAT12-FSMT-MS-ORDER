@@ -1,3 +1,4 @@
+require('newrelic');
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
@@ -13,7 +14,7 @@ async function bootstrap() {
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
   });
 
-  // app.useLogger(app.get(CustomLogger));
+  app.useLogger(app.get(CustomLogger));
 
   const logger = new Logger('MAIN');
 
