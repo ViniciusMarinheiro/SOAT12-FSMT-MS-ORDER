@@ -43,7 +43,6 @@ export class UpdateWorkOrderStatusUseCase {
 
     const updated = await this.workOrderRepo.findOne({ where: { id } });
 
-    // Enviar para produção quando status for IN_PROGRESS (aprovada e pronta para execução)
     if (status === WorkOrderStatusEnum.IN_PROGRESS && updated) {
       try {
         await this.workOrderQueueProvider.sendToProduction({
@@ -58,7 +57,6 @@ export class UpdateWorkOrderStatusUseCase {
           error: error.message,
           workOrderId: id,
         });
-        // Não lançar erro para não quebrar o fluxo principal
       }
     }
 

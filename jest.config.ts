@@ -1,0 +1,68 @@
+import type { Config } from 'jest';
+
+const config: Config = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  rootDir: '.',
+  moduleFileExtensions: ['ts', 'js', 'json'],
+  testRegex: '.*\\.spec\\.ts$',
+  transform: {
+    '^.+\\.(t|j)s$': 'ts-jest',
+  },
+  collectCoverageFrom: [
+    'src/**/*.(t|j)s',
+    '!src/**/*.spec.ts',
+    '!src/**/*.test.ts',
+    '!src/**/*.e2e-spec.ts',
+    '!src/__tests__/**/*',
+  ],
+  coverageDirectory: '<rootDir>/coverage',
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '.module.ts$',
+    '.dto.ts$',
+    '.entity.ts$',
+    'main.ts$',
+    '.interface.ts$',
+    '.enum.ts$',
+    'index.ts$',
+    'repository.ts$',
+    'src/migrations/',
+    'src/common/constants',
+    'src/common/decorators',
+    'src/common/service',
+    'src/common/exceptions',
+    'src/common/log/',
+    'src/common/strategies/',
+    'src/common/guards/combined-jwt-auth-lambda.guard.ts',
+    'src/common/guards/jwt-auth.guard.ts',
+    'src/common/guards/local-auth.guard.ts',
+    'src/common/utils/email-templates.util.ts',
+    'src/app.controller.ts',
+    'src/app.service.ts',
+    'src/providers/http/',
+    'src/providers/rabbitmq/rabbitmq.controller.ts',
+    'src/providers/rabbitmq/rabbitmq.service.ts',
+    'src/providers/rabbitmq/rabbitmq.setup.service.ts',
+    'src/providers/rabbitmq/rabbitmq.config.ts',
+    'src/providers/rabbitmq/providers/',
+    'src/providers/rabbitmq/strategy/handleMessageStrategy.service.ts',
+    '.*\\.spec\\.ts$',
+    '.*\\.test\\.ts$',
+    '.*\\.e2e-spec\\.ts$',
+  ],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+};
+
+export default config;
