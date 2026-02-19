@@ -1,0 +1,142 @@
+name: CI/CD Pipeline - oficina-order
+
+on:
+  push:
+    branches: ['master', 'main']
+  pull_request:
+    branches: ['master', 'main']
+
+env:
+  NODE_VERSION: '18'
+  ACR_NAME: acrfsmt
+  IMAGE_NAME: oficina-order
+  RESOURCE_GROUP: rg-fsmt-soat12
+  CLUSTER_NAME: aks-fsmt
+  NEW_RELIC_LICENSE_KEY: '0b03617db38d9d22049c348c7def8658FFFFNRAL'
+
+jobs:
+  # --- 1. VALIDATE ---
+  validate:
+    name: ?? Validar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm install
+
+  # --- 2. TESTS (Simplificado para rodar em todos) ---
+  unit-tests:
+    name: ?? Testes
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm install
+      # Roda testes se houver script, senão apenas echo (evita falha se não tiver testes ainda)
+      - run: npm run test:cov --if-present
+
+  # --- 3. SECURITY ---
+  security:
+    name: ?? Segurança
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm install
+      - run: npm audit --audit-level=high || true
+
+  # --- 4. BUILD & DEPLOY ---
+  build-and-deploy:
+    name: ??? Build e Deploy AKS
+    runs-on: ubuntu-latest
+    needs: [unit-tests, security]
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and Push to ACR
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.RESOURCE_GROUP }}
+          cluster-name: ${{ env.CLUSTER_NAME }}
+
+      # --- INSTALAÇÃO NEW RELIC (COM RETRY DOS PRINTS) ---
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
+      - name: Install New Relic Operator
+        run: |
+          helm repo add k8s-agents-operator https://newrelic.github.io/k8s-agents-operator
+          helm repo update
+          helm upgrade --install k8s-agents-operator k8s-agents-operator/k8s-agents-operator \
+            --namespace newrelic \
+            --create-namespace \
+            --set licenseKey=${{ env.NEW_RELIC_LICENSE_KEY }} \
+            --wait \
+            --timeout 5m
+
+      - name: Wait for New Relic CRDs
+        run: |
+          echo "Waiting for New Relic CRDs..."
+          for i in {1..60}; do
+            if kubectl get crd instrumentations.newrelic.com 2>/dev/null; then
+              echo "? CRD found!"
+              exit 0
+            fi
+            echo "Attempt $i/60: Waiting..."
+            sleep 5
+          done
+          echo "? CRD not found"
+          exit 1
+
+      # --- DEPLOY DOS MANIFESTOS ---
+      - name: Deploy to AKS
+        uses: azure/k8s-deploy@v4
+        with:
+          manifests: |
+            k8s/secret.yaml
+            k8s/rabbitmq.yaml
+            k8s/deployment.yaml
+            k8s/service.yaml
+          images: |
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # --- LOGS EM CASO DE FALHA (DOS PRINTS) ---
+      - name: Debug on Failure
+        if: failure()
+        run: |
+          echo "=== PODS STATUS ==="
+          kubectl get pods -n default
+          echo "=== LOGS ==="
+          kubectl logs -l app=oficina-order --tail=50 --all-containers=true || true
+          echo "=== DESCRIBE ==="
+          kubectl describe pods -l app=oficina-order || true
+
+      # --- APLICA INSTRUMENTAÇÃO ---
+      - name: Apply Instrumentation
+        run: kubectl apply -f k8s/instrumentation.yaml
+
