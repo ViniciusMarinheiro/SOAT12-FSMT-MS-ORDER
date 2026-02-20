@@ -14,7 +14,8 @@ export class BaseApiHttpService {
     @Inject(REQUEST) private readonly request: Request,
   ) {
     this.API_BASE_URL =
-      this.envConfigService.get('API_BASE_URL') || 'http://localhost:3000';
+      this.envConfigService.get('API_BASE_URL') ||
+      'http://localhost:3333/api/v1/oficina';
   }
 
   get headers() {
