@@ -4,7 +4,10 @@ import { Repository } from 'typeorm';
 import { WorkOrder } from '../../infrastructure/database/work-order.entity';
 import { WorkOrderStatusLog } from '../../infrastructure/database/work-order-status-log.entity';
 import { WorkOrderStatusEnum } from '../../domain/enums/work-order-status.enum';
-import { WorkOrderQueueProvider } from '@/providers/rabbitmq/work-order-queue.provider';
+import { WorkOrderQueueProvider } from '@/providers/rabbitmq/providers/work-order-queue.provider';
+import { SagaEventsProvider } from '@/providers/rabbitmq/saga/saga-events.provider';
+import { SagaWorkOrderStep } from '@/providers/rabbitmq/saga/saga.types';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UpdateWorkOrderStatusUseCase {
@@ -16,6 +19,7 @@ export class UpdateWorkOrderStatusUseCase {
     @InjectRepository(WorkOrderStatusLog)
     private readonly statusLogRepo: Repository<WorkOrderStatusLog>,
     private readonly workOrderQueueProvider: WorkOrderQueueProvider,
+    private readonly sagaEvents: SagaEventsProvider,
   ) {}
 
   async execute(id: number, status: WorkOrderStatusEnum) {
@@ -30,7 +34,11 @@ export class UpdateWorkOrderStatusUseCase {
 
     await this.workOrderRepo.update(id, { status });
     await this.statusLogRepo.save(
-      this.statusLogRepo.create({ workOrderId: id, status }),
+      this.statusLogRepo.create({
+        workOrderId: id,
+        status,
+        startedAt: new Date(),
+      }),
     );
 
     if (status === WorkOrderStatusEnum.FINISHED) {
@@ -39,7 +47,6 @@ export class UpdateWorkOrderStatusUseCase {
 
     const updated = await this.workOrderRepo.findOne({ where: { id } });
 
-    // Enviar para produção quando status for IN_PROGRESS (aprovada e pronta para execução)
     if (status === WorkOrderStatusEnum.IN_PROGRESS && updated) {
       try {
         await this.workOrderQueueProvider.sendToProduction({
@@ -50,11 +57,18 @@ export class UpdateWorkOrderStatusUseCase {
           totalAmount: updated.totalAmount,
         });
       } catch (error: any) {
-        this.logger.error('Erro ao enviar OS para produção', {
+        this.logger.error('Erro ao enviar OS para produção; disparando compensação saga', {
           error: error.message,
           workOrderId: id,
         });
-        // Não lançar erro para não quebrar o fluxo principal
+        await this.sagaEvents.publishCompensate({
+          sagaId: crypto.randomUUID(),
+          workOrderId: id,
+          step: SagaWorkOrderStep.SEND_TO_PRODUCTION,
+          reason: error?.message,
+          failedStep: SagaWorkOrderStep.SEND_TO_PRODUCTION,
+        });
+        throw error;
       }
     }
 

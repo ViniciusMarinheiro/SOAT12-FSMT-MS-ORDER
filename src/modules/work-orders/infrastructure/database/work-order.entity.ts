@@ -56,4 +56,10 @@ export class WorkOrder {
     nullable: true,
   })
   finishedAt: Date | null;
+
+  @Column({ type: 'varchar', name: 'payment_init_point', nullable: true })
+  paymentInitPoint: string | null;
+
+  @Column({ type: 'varchar', name: 'payment_preference_id', nullable: true })
+  paymentPreferenceId: string | null;
 }

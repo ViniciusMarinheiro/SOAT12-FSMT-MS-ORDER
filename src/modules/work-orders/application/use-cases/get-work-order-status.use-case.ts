@@ -25,6 +25,8 @@ export class GetWorkOrderStatusUseCase {
       id: workOrder.id,
       status: workOrder.status,
       protocol: workOrder.protocol,
+      paymentInitPoint: workOrder.paymentInitPoint ?? undefined,
+      paymentPreferenceId: workOrder.paymentPreferenceId ?? undefined,
     };
     this.logger.log('Status da ordem de serviço obtido com sucesso', result);
     return result;

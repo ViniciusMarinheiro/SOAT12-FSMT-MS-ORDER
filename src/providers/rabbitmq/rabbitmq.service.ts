@@ -4,7 +4,7 @@ import { MicroserviceOptions } from '@nestjs/microservices';
 import { MessageConfig } from './types/message.interface';
 import { EnvConfigService } from '@/common/service/env/env-config.service';
 import { EnvConfigModule } from '@/common/service/env/env-config.module';
-import { getRabbitMQConfigs } from './rabbitmq.config';
+import { getRabbitMQConfigs, getConsumerConfigs } from './rabbitmq.config';
 
 @Injectable()
 export class RabbitMQService {
@@ -20,7 +20,8 @@ export class RabbitMQService {
       options: {
         urls: [url],
         queue: config.queue,
-        noAck: false,
+        // noAck: true obrigatório para o reply queue (amq.rabbitmq.reply-to) - não suporta ack manual
+        noAck: true,
         prefetchCount: 1,
         persistent: true,
         consumerTag: `${config.queue}_consumer`,
@@ -60,7 +61,7 @@ export class RabbitMQService {
     app: INestApplication,
     rabbitmqUrl: string,
   ): void {
-    getRabbitMQConfigs().forEach((config) => {
+    getConsumerConfigs().forEach((config) => {
       const options: MicroserviceOptions = {
         transport: Transport.RMQ,
         options: {
@@ -93,7 +94,7 @@ export class RabbitMQService {
     app: INestApplication,
     rabbitmqUrl: string,
   ): void {
-    getRabbitMQConfigs().forEach((config) => {
+    getConsumerConfigs().forEach((config) => {
       const dlqQueue = `${config.queue}.dlq`;
       const options: MicroserviceOptions = {
         transport: Transport.RMQ,

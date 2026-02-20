@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -24,5 +25,6 @@ export class WorkOrderService {
   totalPrice: number;
 
   @ManyToOne(() => WorkOrder, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'work_order_id' })
   workOrder: WorkOrder;
 }

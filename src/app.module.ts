@@ -11,6 +11,7 @@ import { DatabaseModule } from './common/service/database/database.module';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 import * as newrelic from 'newrelic';
 import { RabbitMQModule } from './providers/rabbitmq/rabbitmq.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 const isTest = process.env.NODE_ENV === 'test';
 const isDevelopment = process.env.NODE_ENV !== 'production' && !isTest;
@@ -28,6 +29,7 @@ const getNewRelicMetadata = () => {
     EnvConfigModule,
     DatabaseModule,
     RabbitMQModule,
+    AuthModule,
     WorkOrdersModule,
     PinoLoggerModule.forRoot({
       pinoHttp: {

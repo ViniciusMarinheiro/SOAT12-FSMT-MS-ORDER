@@ -24,8 +24,23 @@ export class RabbitMQController {
       this.envConfigService.get('DLQ_REPUBLISH_TO_MAIN') || false;
   }
 
-  @EventPattern()
-  async handleMessage(@Payload() data: any, @Ctx() context: RmqContext) {
+  @EventPattern('status-update')
+  async handleStatusUpdate(@Payload() data: any, @Ctx() context: RmqContext) {
+    return this.handleMessage(data, context);
+  }
+
+  @EventPattern('payment.approved')
+  async handlePaymentApproved(
+    @Payload() data: any,
+    @Ctx() context: RmqContext,
+  ) {
+    return this.handleMessage(data, context);
+  }
+
+  private async handleMessage(
+    @Payload() data: any,
+    @Ctx() context: RmqContext,
+  ) {
     const channel = context.getChannelRef();
     const originalMessage = context.getMessage();
     const routingKey = originalMessage.fields.routingKey;
