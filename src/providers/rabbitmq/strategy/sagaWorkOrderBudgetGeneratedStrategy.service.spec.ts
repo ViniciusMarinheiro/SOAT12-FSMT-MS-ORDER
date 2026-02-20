@@ -6,12 +6,16 @@ import { WorkOrder } from '@/modules/work-orders/infrastructure/database/work-or
 import { WorkOrderStatusLog } from '@/modules/work-orders/infrastructure/database/work-order-status-log.entity';
 import { SagaEventsProvider } from '../saga/saga-events.provider';
 import { WorkOrderStatusEnum } from '@/modules/work-orders/domain/enums/work-order-status.enum';
+import { PaymentHttpService } from '@/providers/http/payment-http.service';
+import { SendEmailQueueProvider } from '../providers/send-email-queue.provider';
 
 describe('SagaWorkOrderBudgetGeneratedStrategy', () => {
   let strategy: SagaWorkOrderBudgetGeneratedStrategy;
   let workOrderRepo: jest.Mocked<Repository<WorkOrder>>;
   let statusLogRepo: jest.Mocked<Repository<WorkOrderStatusLog>>;
   let sagaEvents: jest.Mocked<SagaEventsProvider>;
+  let paymentHttpService: jest.Mocked<PaymentHttpService>;
+  let sendEmailQueue: jest.Mocked<SendEmailQueueProvider>;
 
   beforeEach(async () => {
     const mockWorkOrderRepo = {
@@ -26,6 +30,16 @@ describe('SagaWorkOrderBudgetGeneratedStrategy', () => {
       publishWorkOrderAwaitingApproval: jest.fn().mockResolvedValue(undefined),
       publishCompensate: jest.fn().mockResolvedValue(undefined),
     };
+    const mockPaymentHttpService = {
+      createPayment: jest.fn().mockResolvedValue({
+        init_point:
+          'https://www.mercadopago.com/checkout/v1/redirect?pref_id=test',
+        id: 'pref-test',
+      }),
+    };
+    const mockSendEmailQueue = {
+      send: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -36,13 +50,23 @@ describe('SagaWorkOrderBudgetGeneratedStrategy', () => {
           useValue: mockStatusLogRepo,
         },
         { provide: SagaEventsProvider, useValue: mockSagaEvents },
+        { provide: PaymentHttpService, useValue: mockPaymentHttpService },
+        { provide: SendEmailQueueProvider, useValue: mockSendEmailQueue },
       ],
     }).compile();
 
     strategy = module.get(SagaWorkOrderBudgetGeneratedStrategy);
     workOrderRepo = module.get(getRepositoryToken(WorkOrder));
     statusLogRepo = module.get(getRepositoryToken(WorkOrderStatusLog));
-    sagaEvents = module.get(SagaEventsProvider) as any;
+    sagaEvents = module.get(
+      SagaEventsProvider,
+    ) as jest.Mocked<SagaEventsProvider>;
+    paymentHttpService = module.get(
+      PaymentHttpService,
+    ) as jest.Mocked<PaymentHttpService>;
+    sendEmailQueue = module.get(
+      SendEmailQueueProvider,
+    ) as jest.Mocked<SendEmailQueueProvider>;
   });
 
   afterEach(() => jest.clearAllMocks());

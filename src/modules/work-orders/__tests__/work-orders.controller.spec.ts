@@ -86,6 +86,8 @@ describe('WorkOrdersController', () => {
       id: 1,
       status: WorkOrderStatusEnum.RECEIVED,
       protocol: 'P-001',
+      paymentInitPoint: undefined as string | undefined,
+      paymentPreferenceId: undefined as string | undefined,
     };
     getStatusUseCase.execute.mockResolvedValue(statusResult);
 
