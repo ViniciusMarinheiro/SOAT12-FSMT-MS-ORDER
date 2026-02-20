@@ -1,4 +1,4 @@
-﻿name: CI/CD Pipeline - oficina-order
+name: CI/CD Pipeline - oficina-order
 
 on:
   push:
@@ -71,11 +71,15 @@ jobs:
           docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} .
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-      - name: Set AKS Context (Fix Kubelogin)
+      - name: Setup Kubelogin
+        uses: azure/setup-kubelogin@v1
+
+      - name: Set AKS Context
         uses: azure/aks-set-context@v3
         with:
           resource-group: ${{ env.RESOURCE_GROUP }}
           cluster-name: ${{ env.CLUSTER_NAME }}
+          admin: 'true'
           use-kubelogin: 'true'
 
       - name: Install Helm
@@ -118,15 +122,6 @@ jobs:
             k8s/service.yaml
           images: |
             ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      - name: Debug on Failure
-        if: failure()
-        continue-on-error: true
-        run: |
-          echo "=== PODS STATUS ==="
-          kubectl get pods -n default || echo "Falha ao ler pods"
-          echo "=== LOGS ==="
-          kubectl logs -l app=oficina-order --tail=50 --all-containers=true || echo "Falha ao ler logs"
 
       - name: Apply Instrumentation
         run: kubectl apply -f k8s/instrumentation.yaml || true
