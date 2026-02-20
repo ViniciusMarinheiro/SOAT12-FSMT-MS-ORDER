@@ -77,6 +77,7 @@ describe('WorkOrdersController', () => {
     expect(updateStatusUseCase.execute).toHaveBeenCalledWith(
       1,
       WorkOrderStatusEnum.IN_PROGRESS,
+      { paymentTitle: undefined },
     );
     expect(result).toEqual(updated);
   });

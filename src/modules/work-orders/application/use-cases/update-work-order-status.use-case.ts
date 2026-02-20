@@ -64,7 +64,6 @@ export class UpdateWorkOrderStatusUseCase {
         const customer = await this.customerHttpService.getCustomerById(
           updated.customerId,
         );
-        console.log('customer', customer);
         const payerEmail = customer?.email;
         if (payerEmail) {
           await this.paymentRequestQueueProvider.requestPayment({
