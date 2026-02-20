@@ -77,6 +77,7 @@ describe('WorkOrdersController', () => {
     expect(updateStatusUseCase.execute).toHaveBeenCalledWith(
       1,
       WorkOrderStatusEnum.IN_PROGRESS,
+      { paymentTitle: undefined },
     );
     expect(result).toEqual(updated);
   });
@@ -86,6 +87,8 @@ describe('WorkOrdersController', () => {
       id: 1,
       status: WorkOrderStatusEnum.RECEIVED,
       protocol: 'P-001',
+      paymentInitPoint: undefined as string | undefined,
+      paymentPreferenceId: undefined as string | undefined,
     };
     getStatusUseCase.execute.mockResolvedValue(statusResult);
 

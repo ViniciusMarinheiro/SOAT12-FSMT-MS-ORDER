@@ -5,9 +5,15 @@ import { WorkOrder } from '../../infrastructure/database/work-order.entity';
 import { WorkOrderStatusLog } from '../../infrastructure/database/work-order-status-log.entity';
 import { WorkOrderStatusEnum } from '../../domain/enums/work-order-status.enum';
 import { WorkOrderQueueProvider } from '@/providers/rabbitmq/providers/work-order-queue.provider';
+import { PaymentRequestQueueProvider } from '@/providers/rabbitmq/providers/payment-request-queue.provider';
 import { SagaEventsProvider } from '@/providers/rabbitmq/saga/saga-events.provider';
 import { SagaWorkOrderStep } from '@/providers/rabbitmq/saga/saga.types';
+import { CustomerHttpService } from '@/providers/http/customer-http.service';
 import * as crypto from 'crypto';
+
+export interface UpdateWorkOrderStatusOptions {
+  paymentTitle?: string;
+}
 
 @Injectable()
 export class UpdateWorkOrderStatusUseCase {
@@ -19,10 +25,16 @@ export class UpdateWorkOrderStatusUseCase {
     @InjectRepository(WorkOrderStatusLog)
     private readonly statusLogRepo: Repository<WorkOrderStatusLog>,
     private readonly workOrderQueueProvider: WorkOrderQueueProvider,
+    private readonly paymentRequestQueueProvider: PaymentRequestQueueProvider,
     private readonly sagaEvents: SagaEventsProvider,
+    private readonly customerHttpService: CustomerHttpService,
   ) {}
 
-  async execute(id: number, status: WorkOrderStatusEnum) {
+  async execute(
+    id: number,
+    status: WorkOrderStatusEnum,
+    options?: UpdateWorkOrderStatusOptions,
+  ) {
     this.logger.log('Atualizando status da ordem de serviço', { id, status });
     const workOrder = await this.workOrderRepo.findOne({ where: { id } });
     if (!workOrder) {
@@ -47,6 +59,37 @@ export class UpdateWorkOrderStatusUseCase {
 
     const updated = await this.workOrderRepo.findOne({ where: { id } });
 
+    if (status === WorkOrderStatusEnum.AWAITING_APPROVAL && updated) {
+      try {
+        const customer = await this.customerHttpService.getCustomerById(
+          updated.customerId,
+        );
+        const payerEmail = customer?.email;
+        if (payerEmail) {
+          await this.paymentRequestQueueProvider.requestPayment({
+            workOrderId: updated.id,
+            title:
+              options?.paymentTitle ?? `Ordem de serviço ${updated.protocol}`,
+            quantity: 1,
+            unitPrice: updated.totalAmount,
+            currencyId: 'BRL',
+            payerEmail,
+          });
+        } else {
+          this.logger.warn(
+            'Cliente da OS sem email: link de pagamento não será gerado',
+            { workOrderId: id, customerId: updated.customerId },
+          );
+        }
+      } catch (error: any) {
+        this.logger.error('Erro ao enviar requisição de pagamento', {
+          error: error.message,
+          workOrderId: id,
+        });
+        throw error;
+      }
+    }
+
     if (status === WorkOrderStatusEnum.IN_PROGRESS && updated) {
       try {
         await this.workOrderQueueProvider.sendToProduction({
@@ -57,10 +100,13 @@ export class UpdateWorkOrderStatusUseCase {
           totalAmount: updated.totalAmount,
         });
       } catch (error: any) {
-        this.logger.error('Erro ao enviar OS para produção; disparando compensação saga', {
-          error: error.message,
-          workOrderId: id,
-        });
+        this.logger.error(
+          'Erro ao enviar OS para produção; disparando compensação saga',
+          {
+            error: error.message,
+            workOrderId: id,
+          },
+        );
         await this.sagaEvents.publishCompensate({
           sagaId: crypto.randomUUID(),
           workOrderId: id,

@@ -37,6 +37,14 @@ export class RabbitMQController {
     return this.handleMessage(data, context);
   }
 
+  @EventPattern('payment.processed')
+  async handlePaymentProcessed(
+    @Payload() data: any,
+    @Ctx() context: RmqContext,
+  ) {
+    return this.handleMessage(data, context);
+  }
+
   private async handleMessage(
     @Payload() data: any,
     @Ctx() context: RmqContext,

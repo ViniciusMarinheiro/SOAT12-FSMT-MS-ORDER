@@ -7,14 +7,18 @@ import { WorkOrder } from '../infrastructure/database/work-order.entity';
 import { WorkOrderStatusLog } from '../infrastructure/database/work-order-status-log.entity';
 import { WorkOrderStatusEnum } from '../domain/enums/work-order-status.enum';
 import { WorkOrderQueueProvider } from '@/providers/rabbitmq/providers/work-order-queue.provider';
+import { PaymentRequestQueueProvider } from '@/providers/rabbitmq/providers/payment-request-queue.provider';
 import { SagaEventsProvider } from '@/providers/rabbitmq/saga/saga-events.provider';
+import { CustomerHttpService } from '@/providers/http/customer-http.service';
 
 describe('UpdateWorkOrderStatusUseCase', () => {
   let useCase: UpdateWorkOrderStatusUseCase;
   let workOrderRepo: jest.Mocked<Repository<WorkOrder>>;
   let statusLogRepo: jest.Mocked<Repository<WorkOrderStatusLog>>;
   let workOrderQueueProvider: jest.Mocked<WorkOrderQueueProvider>;
+  let paymentRequestQueueProvider: jest.Mocked<PaymentRequestQueueProvider>;
   let sagaEventsProvider: jest.Mocked<SagaEventsProvider>;
+  let customerHttpService: jest.Mocked<CustomerHttpService>;
 
   const mockWorkOrder = {
     id: 1,
@@ -40,6 +44,16 @@ describe('UpdateWorkOrderStatusUseCase', () => {
     const mockSagaEventsProvider = {
       publishCompensate: jest.fn().mockResolvedValue(undefined),
     };
+    const mockPaymentRequestQueueProvider = {
+      requestPayment: jest.fn().mockResolvedValue(undefined),
+    };
+    const mockCustomerHttpService = {
+      getCustomerById: jest.fn().mockResolvedValue({
+        id: 10,
+        name: 'Customer Test',
+        email: 'customer@test.com',
+      }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,7 +64,12 @@ describe('UpdateWorkOrderStatusUseCase', () => {
           useValue: mockStatusLogRepo,
         },
         { provide: WorkOrderQueueProvider, useValue: mockQueueProvider },
+        {
+          provide: PaymentRequestQueueProvider,
+          useValue: mockPaymentRequestQueueProvider,
+        },
         { provide: SagaEventsProvider, useValue: mockSagaEventsProvider },
+        { provide: CustomerHttpService, useValue: mockCustomerHttpService },
       ],
     }).compile();
 
@@ -58,7 +77,9 @@ describe('UpdateWorkOrderStatusUseCase', () => {
     workOrderRepo = module.get(getRepositoryToken(WorkOrder));
     statusLogRepo = module.get(getRepositoryToken(WorkOrderStatusLog));
     workOrderQueueProvider = module.get(WorkOrderQueueProvider);
+    paymentRequestQueueProvider = module.get(PaymentRequestQueueProvider);
     sagaEventsProvider = module.get(SagaEventsProvider);
+    customerHttpService = module.get(CustomerHttpService);
   });
 
   afterEach(() => {
@@ -175,5 +196,73 @@ describe('UpdateWorkOrderStatusUseCase', () => {
         reason: 'Queue error',
       }),
     );
+  });
+
+  it('should call getCustomerById and requestPayment when status is AWAITING_APPROVAL and customer has email', async () => {
+    const updated = {
+      ...mockWorkOrder,
+      status: WorkOrderStatusEnum.AWAITING_APPROVAL,
+    };
+    workOrderRepo.findOne
+      .mockResolvedValueOnce(mockWorkOrder)
+      .mockResolvedValueOnce(updated);
+    customerHttpService.getCustomerById.mockResolvedValue({
+      id: 10,
+      name: 'Customer',
+      email: 'payer@test.com',
+    });
+
+    await useCase.execute(1, WorkOrderStatusEnum.AWAITING_APPROVAL, {
+      paymentTitle: 'Título customizado',
+    });
+
+    expect(customerHttpService.getCustomerById).toHaveBeenCalledWith(10);
+    expect(paymentRequestQueueProvider.requestPayment).toHaveBeenCalledWith({
+      workOrderId: 1,
+      title: 'Título customizado',
+      quantity: 1,
+      unitPrice: 500,
+      currencyId: 'BRL',
+      payerEmail: 'payer@test.com',
+    });
+  });
+
+  it('should not call requestPayment when status is AWAITING_APPROVAL and customer has no email', async () => {
+    const updated = {
+      ...mockWorkOrder,
+      status: WorkOrderStatusEnum.AWAITING_APPROVAL,
+    };
+    workOrderRepo.findOne
+      .mockResolvedValueOnce(mockWorkOrder)
+      .mockResolvedValueOnce(updated);
+    customerHttpService.getCustomerById.mockResolvedValue({
+      id: 10,
+      name: 'Customer',
+      email: '',
+    });
+
+    await useCase.execute(1, WorkOrderStatusEnum.AWAITING_APPROVAL);
+
+    expect(customerHttpService.getCustomerById).toHaveBeenCalledWith(10);
+    expect(paymentRequestQueueProvider.requestPayment).not.toHaveBeenCalled();
+  });
+
+  it('should rethrow when getCustomerById fails on AWAITING_APPROVAL', async () => {
+    const updated = {
+      ...mockWorkOrder,
+      status: WorkOrderStatusEnum.AWAITING_APPROVAL,
+    };
+    workOrderRepo.findOne
+      .mockResolvedValueOnce(mockWorkOrder)
+      .mockResolvedValueOnce(updated);
+    customerHttpService.getCustomerById.mockRejectedValue(
+      new Error('API unavailable'),
+    );
+
+    await expect(
+      useCase.execute(1, WorkOrderStatusEnum.AWAITING_APPROVAL),
+    ).rejects.toThrow('API unavailable');
+
+    expect(paymentRequestQueueProvider.requestPayment).not.toHaveBeenCalled();
   });
 });

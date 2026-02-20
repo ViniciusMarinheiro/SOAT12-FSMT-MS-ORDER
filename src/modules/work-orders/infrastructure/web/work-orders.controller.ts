@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -33,7 +41,9 @@ export class WorkOrdersController {
   @Patch(':id/status')
   @ApiOperation({ summary: 'Atualização de status da OS' })
   updateStatus(@Param('id') id: string, @Body() dto: UpdateWorkOrderStatusDto) {
-    return this.updateWorkOrderStatusUseCase.execute(+id, dto.status);
+    return this.updateWorkOrderStatusUseCase.execute(+id, dto.status, {
+      paymentTitle: dto.paymentTitle,
+    });
   }
 
   @Get(':id/status')

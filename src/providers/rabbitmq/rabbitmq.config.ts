@@ -87,6 +87,25 @@ export const rabbitMQConfig: Record<string, RabbitMQConfig> = {
     strategyKey: 'paymentApproved',
     isConsumer: true,
   },
+  // Publicar requisição de pagamento (ORDER -> PAYMENT)
+  paymentRequested: {
+    exchange: 'payment.v1',
+    queue: 'payment.v1.requested',
+    routingKey: 'payment.v1.requested',
+    deadLetterExchange: 'payment.v1.dlq',
+    deadLetterRoutingKey: 'payment.requested.dlq',
+    isConsumer: false,
+  },
+  // Consumir resultado do pagamento (PAYMENT -> ORDER: link para enviar por email)
+  paymentProcessed: {
+    exchange: 'payment.v1',
+    queue: 'payment.v1.processed',
+    routingKey: 'payment.processed',
+    deadLetterExchange: 'payment.v1.dlq',
+    deadLetterRoutingKey: 'payment.processed.dlq',
+    strategyKey: 'paymentProcessed',
+    isConsumer: true,
+  },
 };
 
 export const getRabbitMQConfigs = (): RabbitMQConfig[] => {

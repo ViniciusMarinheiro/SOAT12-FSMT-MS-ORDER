@@ -15,7 +15,9 @@ import { WorkOrder } from '@/modules/work-orders/infrastructure/database/work-or
 import { WorkOrderStatusLog } from '@/modules/work-orders/infrastructure/database/work-order-status-log.entity';
 import { WorkOrderQueueProvider } from './providers/work-order-queue.provider';
 import { SendEmailQueueProvider } from './providers/send-email-queue.provider';
+import { PaymentRequestQueueProvider } from './providers/payment-request-queue.provider';
 import { SagaEventsProvider } from './saga/saga-events.provider';
+import { PaymentProcessedStrategy } from './strategy/paymentProcessedStrategy.service';
 import { WorkOrdersModule } from '@/modules/work-orders/work-orders.module';
 import { PaymentHttpModule } from '@/providers/http/payment-http.module';
 
@@ -38,9 +40,11 @@ import { PaymentHttpModule } from '@/providers/http/payment-http.module';
     SagaWorkOrderBudgetGeneratedStrategy,
     SagaCompensateOrderStrategy,
     PaymentApprovedStrategy,
+    PaymentProcessedStrategy,
     HandleMessageStrategyFactory,
     WorkOrderQueueProvider,
     SendEmailQueueProvider,
+    PaymentRequestQueueProvider,
     SagaEventsProvider,
   ],
   exports: [
@@ -48,6 +52,7 @@ import { PaymentHttpModule } from '@/providers/http/payment-http.module';
     RabbitMQService,
     WorkOrderQueueProvider,
     SendEmailQueueProvider,
+    PaymentRequestQueueProvider,
     SagaEventsProvider,
   ],
 })
