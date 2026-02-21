@@ -8,12 +8,10 @@ import { WorkOrderPart } from '../../../modules/work-orders/infrastructure/datab
 
 config();
 
-async function ensureSchemaExists() {
-  const schemaName = process.env.DB_SCHEMA || 'orders';
+const DEFAULT_SCHEMA = 'orders';
 
-  if (schemaName === 'public') {
-    return;
-  }
+export async function ensureSchemaExists(): Promise<void> {
+  const schemaName = process.env.DB_SCHEMA || DEFAULT_SCHEMA;
 
   const client = new Client({
     host: process.env.DB_HOST || 'localhost',
@@ -26,16 +24,12 @@ async function ensureSchemaExists() {
   try {
     await client.connect();
     await client.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
-    await client.end();
   } catch (error) {
     console.error('Erro ao criar schema:', error);
-    await client.end();
     throw error;
+  } finally {
+    await client.end();
   }
-}
-
-if (process.env.NODE_ENV !== 'test') {
-  ensureSchemaExists().catch(console.error);
 }
 
 export const AppDataSource = new DataSource({
@@ -45,7 +39,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_DATABASE || 'postgres',
-  schema: process.env.DB_SCHEMA || 'public',
+  schema: process.env.DB_SCHEMA || DEFAULT_SCHEMA,
   entities: [WorkOrder, WorkOrderStatusLog, WorkOrderService, WorkOrderPart],
   migrations:
     process.env.NODE_ENV === 'production'

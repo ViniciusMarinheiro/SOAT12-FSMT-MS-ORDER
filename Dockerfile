@@ -39,6 +39,7 @@ WORKDIR /usr/src/app
 COPY --from=build /usr/src/app/package.json ./package.json
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/ensure-schema.js ./ensure-schema.js
 
 # Copiar arquivos de configuração necessários
 COPY --from=build /usr/src/app/tsconfig.json ./tsconfig.json
@@ -51,5 +52,5 @@ ENV PORT=3000
 # 👇 AQUI ESTÁ A CORREÇÃO: Mudando de 3333 para 3000
 EXPOSE 3000
 
-# Comando para iniciar a aplicação (roda migrations, seed e inicia)
-CMD ["/bin/sh", "-c", "yarn typeorm-ts-node-commonjs migration:run -d dist/src/common/service/database/data-source.js && node dist/src/main.js"]
+# Comando: criar schema, rodar migrations, iniciar app (data-source.js já está no build)
+CMD ["/bin/sh", "-c", "node ensure-schema.js && yarn typeorm-ts-node-commonjs migration:run -d dist/src/common/service/database/data-source.js && node dist/src/main.js"]

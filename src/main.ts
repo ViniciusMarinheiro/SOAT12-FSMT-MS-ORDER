@@ -1,4 +1,5 @@
 require('newrelic');
+import { config } from 'dotenv';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
@@ -8,8 +9,12 @@ import { EnvConfigService } from './common/service/env/env-config.service';
 import helmet from 'helmet';
 import { RabbitMQSetupService } from './providers/rabbitmq/rabbitmq.setup.service';
 import { RabbitMQService } from './providers/rabbitmq/rabbitmq.service';
+import { ensureSchemaExists } from './common/service/database/data-source';
+
+config();
 
 async function bootstrap() {
+  await ensureSchemaExists();
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
   });
