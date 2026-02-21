@@ -35,24 +35,31 @@ spec:
           value: "oficina_db" 
         - name: DB_SCHEMA
           value: "public"
-        # 👇 Configurações de SSL obrigatórias para a Azure
         - name: PGSSLMODE
           value: "require"
         - name: DB_SSL
           value: "true"
 
         # ------------------------------------------------
-        # 2. MENSAGERIA E APLICAÇÃO
+        # 2. MENSAGERIA E REDIS
         # ------------------------------------------------
-        - name: NODE_ENV
-          value: "production"
-        - name: PORT
-          value: "3000"
-        - name: DOCUMENTATION_PREFIX
-          value: "api/v1/orders"
         - name: RABBITMQ_URL
           value: "amqp://guest:guest@rabbitmq-service:5672"
-          
+        - name: RABBITMQ_CONSUMER_MAX_RETRIES
+          value: "3"
+        - name: RABBITMQ_CONSUMER_RETRY_DELAY_MS
+          value: "1000"
+        - name: DLQ_REPUBLISH_TO_MAIN
+          value: "false"
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DB
+          value: "0"
+        - name: REDIS_PASSWORD
+          value: ""
+
         # ------------------------------------------------
         # 3. SEGURANÇA E JWT
         # ------------------------------------------------
@@ -60,3 +67,33 @@ spec:
           value: "508e703c81a194c84a9895bd04362f504b33d8366a2f371cc0d346074fa6e7697c8f2e9d2df38ac8edb86f4935a45037053f16821d1667d6c3d8afaf082f366f"
         - name: JWT_EXPIRES_IN
           value: "7d"
+        - name: LAMBDA_JWT_SECRET
+          value: "dummy-secret-para-passar-na-validacao"
+
+        # ------------------------------------------------
+        # 4. CONFIGURAÇÕES GERAIS E EMAIL (Faltavam essas!)
+        # ------------------------------------------------
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: DOCUMENTATION_PREFIX
+          value: "api/v1/orders"
+        - name: SERVER_URL
+          value: "http://localhost:3332"
+        - name: API_BASE_URL
+          value: "http://localhost:3333/api/v1/oficina"
+        - name: LAMBDA_FUNCTION_URL
+          value: "http://dummy-lambda-url"
+        - name: SMTP_HOST
+          value: "smtp.gmail.com"
+        - name: PORT_EMAIL
+          value: "465"
+        - name: SECURE_EMAIL
+          value: "true"
+        - name: USER_EMAIL
+          value: "junioryrj@gmail.com"
+        - name: BBC_EMAIL
+          value: "rodrigo.franco@unifio.edu.br"
+        - name: PASS_EMAIL
+          value: "oyjn prnc rfcy zfqz"
