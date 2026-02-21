@@ -15,91 +15,105 @@ spec:
         app: order-service
     spec:
       containers:
-      - name: order-service
-        image: soat12acr.azurecr.io/oficina-order:latest 
-        ports:
-        - containerPort: 3000
-        env:
-        # ------------------------------------------------
-        # 0. OBSERVABILIDADE (NEW RELIC)
-        # ------------------------------------------------
-        - name: NEW_RELIC_APP_NAME
-          value: "12_soat_order"
+        - name: order-service
+          image: soat12acr.azurecr.io/oficina-order:latest
+          ports:
+            - containerPort: 3000
+          env:
+            # ------------------------------------------------
+            # 0. OBSERVABILIDADE (NEW RELIC)
+            # ------------------------------------------------
+            - name: NEW_RELIC_LICENSE_KEY
+              value: 0b03617db38d9d22049c348c7def8658FFFFNRAL
+            - name: NEW_RELIC_NO_CONFIG_FILE
+              value: 'true'
+            - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+              value: 'true'
+            - name: NEW_RELIC_LOG
+              value: stdout
+            - name: NEW_RELIC_AI_MONITORING_ENABLED
+              value: 'true'
+            - name: NEW_RELIC_CUSTOM_INSIGHTS_EVENTS_MAX_SAMPLES_STORED
+              value: 100k
+            - name: NEW_RELIC_SPAN_EVENTS_MAX_SAMPLES_STORED
+              value: 10k
+            - name: NEW_RELIC_APP_NAME
+              value: 12_soat_order
 
-        # ------------------------------------------------
-        # 1. BANCO DE DADOS
-        # ------------------------------------------------
-        - name: DB_HOST
-          value: "soat12-postgres-fsmt.postgres.database.azure.com"
-        - name: DB_PORT
-          value: "5432"
-        - name: DB_USERNAME
-          value: "postgres"
-        - name: DB_PASSWORD
-          value: "vD3WTW0gGmahJdjCfXHG"
-        - name: DB_DATABASE
-          value: "oficina_db" 
-        - name: DB_SCHEMA
-          value: "public"
-        - name: PGSSLMODE
-          value: "require"
-        - name: DB_SSL
-          value: "true"
+            # ------------------------------------------------
+            # 1. BANCO DE DADOS
+            # ------------------------------------------------
+            - name: DB_HOST
+              value: 'soat12-postgres-fsmt.postgres.database.azure.com'
+            - name: DB_PORT
+              value: '5432'
+            - name: DB_USERNAME
+              value: 'postgres'
+            - name: DB_PASSWORD
+              value: 'vD3WTW0gGmahJdjCfXHG'
+            - name: DB_DATABASE
+              value: 'oficina_db'
+            - name: DB_SCHEMA
+              value: 'orders'
+            - name: PGSSLMODE
+              value: 'require'
+            - name: DB_SSL
+              value: 'true'
 
-        # ------------------------------------------------
-        # 2. MENSAGERIA E REDIS
-        # ------------------------------------------------
-        - name: RABBITMQ_URL
-          value: "amqp://guest:guest@rabbitmq-service:5672"
-        - name: RABBITMQ_CONSUMER_MAX_RETRIES
-          value: "3"
-        - name: RABBITMQ_CONSUMER_RETRY_DELAY_MS
-          value: "1000"
-        - name: DLQ_REPUBLISH_TO_MAIN
-          value: "false"
-        - name: REDIS_HOST
-          value: "redis-service"
-        - name: REDIS_PORT
-          value: "6379"
-        - name: REDIS_DB
-          value: "0"
-        - name: REDIS_PASSWORD
-          value: ""
+            # ------------------------------------------------
+            # 2. MENSAGERIA E REDIS
+            # ------------------------------------------------
+            - name: RABBITMQ_URL
+              value: 'amqp://guest:guest@rabbitmq-service:5672'
+            - name: RABBITMQ_CONSUMER_MAX_RETRIES
+              value: '3'
+            - name: RABBITMQ_CONSUMER_RETRY_DELAY_MS
+              value: '1000'
+            - name: DLQ_REPUBLISH_TO_MAIN
+              value: 'false'
+            - name: REDIS_HOST
+              value: 'redis-service'
+            - name: REDIS_PORT
+              value: '6379'
+            - name: REDIS_DB
+              value: '0'
+            - name: REDIS_PASSWORD
+              value: ''
 
-        # ------------------------------------------------
-        # 3. SEGURANÇA E JWT
-        # ------------------------------------------------
-        - name: JWT_SECRET
-          value: "508e703c81a194c84a9895bd04362f504b33d8366a2f371cc0d346074fa6e7697c8f2e9d2df38ac8edb86f4935a45037053f16821d1667d6c3d8afaf082f366f"
-        - name: JWT_EXPIRES_IN
-          value: "7d"
-        - name: LAMBDA_JWT_SECRET
-          value: "dummy-secret-para-passar-na-validacao"
+            # ------------------------------------------------
+            # 3. SEGURANÇA E JWT
+            # ------------------------------------------------
+            - name: JWT_SECRET
+              value: '508e703c81a194c84a9895bd04362f504b33d8366a2f371cc0d346074fa6e7697c8f2e9d2df38ac8edb86f4935a45037053f16821d1667d6c3d8afaf082f366f'
+            - name: JWT_EXPIRES_IN
+              value: '7d'
+            - name: LAMBDA_JWT_SECRET
+              value: 'dummy-secret-para-passar-na-validacao'
 
-        # ------------------------------------------------
-        # 4. CONFIGURAÇÕES GERAIS E EMAIL
-        # ------------------------------------------------
-        - name: NODE_ENV
-          value: "production"
-        - name: PORT
-          value: "3000"
-        - name: DOCUMENTATION_PREFIX
-          value: "api/v1/orders"
-        - name: SERVER_URL
-          value: "http://localhost:3332"
-        - name: API_BASE_URL
-          value: "http://localhost:3333/api/v1/oficina"
-        - name: LAMBDA_FUNCTION_URL
-          value: "http://dummy-lambda-url"
-        - name: SMTP_HOST
-          value: "smtp.gmail.com"
-        - name: PORT_EMAIL
-          value: "465"
-        - name: SECURE_EMAIL
-          value: "true"
-        - name: USER_EMAIL
-          value: "junioryrj@gmail.com"
-        - name: BBC_EMAIL
-          value: "rodrigo.franco@unifio.edu.br"
-        - name: PASS_EMAIL
-          value: "oyjn prnc rfcy zfqz"
+            # ------------------------------------------------
+            # 4. CONFIGURAÇÕES GERAIS E EMAIL
+            # ------------------------------------------------
+            - name: NODE_ENV
+              value: 'production'
+            - name: PORT
+              value: '3000'
+            - name: DOCUMENTATION_PREFIX
+              value: 'api/v1/orders'
+            - name: SERVER_URL
+              value: 'http://localhost:3332'
+            - name: API_BASE_URL
+              value: 'http://localhost:3333/api/v1/oficina'
+            - name: LAMBDA_FUNCTION_URL
+              value: 'http://dummy-lambda-url'
+            - name: SMTP_HOST
+              value: 'smtp.gmail.com'
+            - name: PORT_EMAIL
+              value: '465'
+            - name: SECURE_EMAIL
+              value: 'true'
+            - name: USER_EMAIL
+              value: 'junioryrj@gmail.com'
+            - name: BBC_EMAIL
+              value: 'rodrigo.franco@unifio.edu.br'
+            - name: PASS_EMAIL
+              value: 'oyjn prnc rfcy zfqz'
