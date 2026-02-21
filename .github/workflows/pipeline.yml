@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: '22'
-  ACR_NAME: acrfsmt
+  ACR_NAME: soat12acr
   IMAGE_NAME: oficina-order
   RESOURCE_GROUP: SOAT12-FSMT-RG
   CLUSTER_NAME: SOAT12-FSMT-AKS
