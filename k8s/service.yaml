@@ -9,4 +9,4 @@ spec:
   ports:
     - protocol: TCP
       port: 80      # Porta exposta para o cluster
-      targetPort: 8080 # Porta da aplicação Spring
+      targetPort: 3000 # 

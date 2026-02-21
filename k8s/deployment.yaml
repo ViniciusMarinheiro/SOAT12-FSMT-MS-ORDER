@@ -5,7 +5,7 @@ metadata:
   labels:
     app: order-service
 spec:
-  replicas: 2 # Alta disponibilidade simples
+  replicas: 2 # Alta disponibilidade
   selector:
     matchLabels:
       app: order-service
@@ -16,10 +16,10 @@ spec:
     spec:
       containers:
       - name: order-service
-        # O Pipeline vai substituir IMAGE_PLACEHOLDER pela imagem real do ACR
-        image: IMAGE_PLACEHOLDER 
+        # A action do GitHub vai procurar esse nome e substituir a tag 'latest' pelo hash do commit
+        image: soat12acr.azurecr.io/oficina-order:latest 
         ports:
-        - containerPort: 8080
+        - containerPort: 3000 # 👈 Corrigido para a porta do NestJS
         resources:
           requests:
             memory: "256Mi"
@@ -28,18 +28,12 @@ spec:
             memory: "512Mi"
             cpu: "500m"
         env:
-        # Configurações do Spring Boot injetadas aqui
-        - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://<SEU_HOST_DO_TERRAFORM>:5432/order_db"
-        - name: SPRING_DATASOURCE_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: order-db-secret
-              key: username
-        - name: SPRING_DATASOURCE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: order-db-secret
-              key: password
-        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-          value: "update"
+        # Configurações do NestJS / TypeORM
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_URL
+          # Usando o banco que criamos na Azure (ajustado para o banco order_db)
+          value: "postgresql://postgres:vD3WTW0gGmahJdjCfXHG@soat12-postgres-fsmt.postgres.database.azure.com:5432/order_db"
+        - name: RABBITMQ_URL
+          # URL interna do RabbitMQ que acabamos de subir no K8s
+          value: "amqp://rabbitmq-service:5672"
