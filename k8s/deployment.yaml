@@ -21,6 +21,12 @@ spec:
         - containerPort: 3000
         env:
         # ------------------------------------------------
+        # 0. OBSERVABILIDADE (NEW RELIC)
+        # ------------------------------------------------
+        - name: NEW_RELIC_APP_NAME
+          value: "12_soat_order"
+
+        # ------------------------------------------------
         # 1. BANCO DE DADOS
         # ------------------------------------------------
         - name: DB_HOST
@@ -71,7 +77,7 @@ spec:
           value: "dummy-secret-para-passar-na-validacao"
 
         # ------------------------------------------------
-        # 4. CONFIGURAÇÕES GERAIS E EMAIL (Faltavam essas!)
+        # 4. CONFIGURAÇÕES GERAIS E EMAIL
         # ------------------------------------------------
         - name: NODE_ENV
           value: "production"
