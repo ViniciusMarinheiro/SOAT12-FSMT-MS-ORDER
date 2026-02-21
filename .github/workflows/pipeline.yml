@@ -72,7 +72,9 @@ jobs:
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Setup Kubelogin
-        uses: azure/setup-kubelogin@v1
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: 'latest'
 
       - name: Set AKS Context
         uses: azure/aks-set-context@v3
