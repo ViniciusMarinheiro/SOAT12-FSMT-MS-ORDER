@@ -5,7 +5,7 @@ metadata:
   labels:
     app: order-service
 spec:
-  replicas: 1 # Alta disponibilidade
+  replicas: 1 # 👈 Mudamos para 1
   selector:
     matchLabels:
       app: order-service
@@ -16,24 +16,14 @@ spec:
     spec:
       containers:
       - name: order-service
-        # A action do GitHub vai procurar esse nome e substituir a tag 'latest' pelo hash do commit
         image: soat12acr.azurecr.io/oficina-order:latest 
         ports:
-        - containerPort: 3000 # 👈 Corrigido para a porta do NestJS
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        - containerPort: 3000
+        # 👇 Apagamos o bloco 'resources' daqui
         env:
-        # Configurações do NestJS / TypeORM
         - name: NODE_ENV
           value: "production"
         - name: DATABASE_URL
-          # Usando o banco que criamos na Azure (ajustado para o banco order_db)
           value: "postgresql://postgres:vD3WTW0gGmahJdjCfXHG@soat12-postgres-fsmt.postgres.database.azure.com:5432/order_db"
         - name: RABBITMQ_URL
-          # URL interna do RabbitMQ que acabamos de subir no K8s
           value: "amqp://rabbitmq-service:5672"
