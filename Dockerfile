@@ -45,10 +45,11 @@ COPY --from=build /usr/src/app/tsconfig.json ./tsconfig.json
 
 # Definir variáveis de ambiente para produção
 ENV NODE_ENV=production
-ENV PORT=3333
+# 👇 AQUI ESTÁ A CORREÇÃO: Mudando de 3333 para 3000
+ENV PORT=3000
 
-# Expor a porta
-EXPOSE 3333
+# 👇 AQUI ESTÁ A CORREÇÃO: Mudando de 3333 para 3000
+EXPOSE 3000
 
 # Comando para iniciar a aplicação (roda migrations, seed e inicia)
 CMD ["/bin/sh", "-c", "yarn typeorm-ts-node-commonjs migration:run -d dist/src/common/service/database/data-source.js && node dist/src/main.js"]
