@@ -73,6 +73,8 @@ jobs:
 
       - name: Setup Kubelogin
         uses: azure/use-kubelogin@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           kubelogin-version: 'latest'
 
