@@ -113,7 +113,7 @@ jobs:
             --create-namespace \
             --set licenseKey=${{ env.NEW_RELIC_LICENSE_KEY }} \
             --wait \
-            --timeout 5m
+            --timeout 5m || true
 
       - name: Wait for New Relic CRDs
         run: |
