@@ -69,7 +69,7 @@ export class CombinedJwtAuthLambdaGuard extends AuthGuard('jwt') {
       const result = super.canActivate(context);
       const isAllowed = await this.resolveCanActivate(result);
       return isAllowed;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Token inválido');
     }
   }

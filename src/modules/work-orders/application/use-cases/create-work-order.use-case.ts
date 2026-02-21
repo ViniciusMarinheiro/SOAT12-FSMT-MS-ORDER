@@ -160,16 +160,21 @@ export class CreateWorkOrderUseCase {
           protocol: savedWorkOrder.protocol,
           totalAmount: savedWorkOrder.totalAmount,
         });
-      } catch (sagaError: any) {
-        this.logger.error('Falha ao publicar evento saga work_order.created; disparando compensação', {
-          workOrderId: savedWorkOrder.id,
-          error: sagaError?.message,
-        });
+      } catch (sagaError: unknown) {
+        const msg =
+          sagaError instanceof Error ? sagaError.message : String(sagaError);
+        this.logger.error(
+          'Falha ao publicar evento saga work_order.created; disparando compensação',
+          {
+            workOrderId: savedWorkOrder.id,
+            error: msg,
+          },
+        );
         await this.sagaEvents.publishCompensate({
           sagaId: crypto.randomUUID(),
           workOrderId: savedWorkOrder.id,
           step: SagaWorkOrderStep.CREATE,
-          reason: sagaError?.message,
+          reason: msg,
         });
         throw sagaError;
       }

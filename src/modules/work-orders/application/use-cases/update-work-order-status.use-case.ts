@@ -54,7 +54,7 @@ export class UpdateWorkOrderStatusUseCase {
     );
 
     if (status === WorkOrderStatusEnum.FINISHED) {
-      await this.workOrderRepo.update(id, { finishedAt: new Date() as any });
+      await this.workOrderRepo.update(id, { finishedAt: new Date() });
     }
 
     const updated = await this.workOrderRepo.findOne({ where: { id } });
@@ -81,9 +81,10 @@ export class UpdateWorkOrderStatusUseCase {
             { workOrderId: id, customerId: updated.customerId },
           );
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errMsg = error instanceof Error ? error.message : String(error);
         this.logger.error('Erro ao enviar requisição de pagamento', {
-          error: error.message,
+          error: errMsg,
           workOrderId: id,
         });
         throw error;
@@ -99,11 +100,12 @@ export class UpdateWorkOrderStatusUseCase {
           protocol: updated.protocol,
           totalAmount: updated.totalAmount,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errMsg = error instanceof Error ? error.message : String(error);
         this.logger.error(
           'Erro ao enviar OS para produção; disparando compensação saga',
           {
-            error: error.message,
+            error: errMsg,
             workOrderId: id,
           },
         );
@@ -111,7 +113,7 @@ export class UpdateWorkOrderStatusUseCase {
           sagaId: crypto.randomUUID(),
           workOrderId: id,
           step: SagaWorkOrderStep.SEND_TO_PRODUCTION,
-          reason: error?.message,
+          reason: errMsg,
           failedStep: SagaWorkOrderStep.SEND_TO_PRODUCTION,
         });
         throw error;

@@ -4,7 +4,7 @@ import { MicroserviceOptions } from '@nestjs/microservices';
 import { MessageConfig } from './types/message.interface';
 import { EnvConfigService } from '@/common/service/env/env-config.service';
 import { EnvConfigModule } from '@/common/service/env/env-config.module';
-import { getRabbitMQConfigs, getConsumerConfigs } from './rabbitmq.config';
+import { getConsumerConfigs } from './rabbitmq.config';
 
 @Injectable()
 export class RabbitMQService {
@@ -15,7 +15,7 @@ export class RabbitMQService {
     if (!url) {
       throw new Error('RABBITMQ_URL não definido');
     }
-    const options: any = {
+    const options: Record<string, unknown> = {
       transport: Transport.RMQ,
       options: {
         urls: [url],
@@ -28,8 +28,16 @@ export class RabbitMQService {
         queueOptions: {
           durable: true,
           arguments: {
-            ...((config as any).exchangeArguments?.['x-cache-size'] != null && {
-              'x-cache-size': (config as any).exchangeArguments['x-cache-size'],
+            ...((
+              config as MessageConfig & {
+                exchangeArguments?: Record<string, unknown>;
+              }
+            ).exchangeArguments?.['x-cache-size'] != null && {
+              'x-cache-size': (
+                config as MessageConfig & {
+                  exchangeArguments?: Record<string, unknown>;
+                }
+              ).exchangeArguments!['x-cache-size'],
             }),
             'x-dead-letter-exchange': config.deadLetterExchange || 'DLX',
             'x-dead-letter-routing-key':
@@ -38,8 +46,11 @@ export class RabbitMQService {
         },
       },
     };
-    if (config.exchange) options.options.exchange = config.exchange;
-    if (config.routingKey) options.options.routingKey = config.routingKey;
+    if (config.exchange)
+      (options.options as Record<string, unknown>).exchange = config.exchange;
+    if (config.routingKey)
+      (options.options as Record<string, unknown>).routingKey =
+        config.routingKey;
     return options;
   }
 
@@ -49,7 +60,9 @@ export class RabbitMQService {
         name: config.routingKey,
         imports: [EnvConfigModule],
         inject: [EnvConfigService],
-        useFactory: (configService: EnvConfigService): any => {
+        useFactory: (
+          configService: EnvConfigService,
+        ): Record<string, unknown> => {
           const service = new RabbitMQService(configService);
           return service.createClientOptions(config);
         },

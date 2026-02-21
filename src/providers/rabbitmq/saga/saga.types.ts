@@ -29,7 +29,7 @@ export interface SagaWorkOrderBudgetGeneratedPayload extends SagaContext {
   customerEmail?: string;
 }
 
-export interface SagaWorkOrderAwaitingApprovalPayload extends SagaContext {}
+export type SagaWorkOrderAwaitingApprovalPayload = SagaContext;
 
 export interface SagaCompensatePayload extends SagaContext {
   reason?: string;

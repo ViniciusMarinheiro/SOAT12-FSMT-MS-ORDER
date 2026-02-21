@@ -32,18 +32,32 @@ export interface EmailTemplateConfig {
 }
 
 export class EmailTemplatesUtil {
-  static prepareEmailTemplateData(workOrder: any): EmailTemplateData {
+  static prepareEmailTemplateData(
+    workOrder: Record<string, unknown>,
+  ): EmailTemplateData {
+    const wo = workOrder as {
+      id: number;
+      totalAmount: number;
+      customer?: { name?: string };
+      vehicle?: { plate?: string };
+      services?: Array<{
+        serviceName: string;
+        quantity: number;
+        totalPrice: number;
+      }>;
+      parts?: Array<{ partName: string; quantity: number; totalPrice: number }>;
+    };
     return {
-      workOrderId: workOrder.id,
-      totalAmount: workOrder.totalAmount,
-      customerName: workOrder.customer?.name,
-      vehiclePlate: workOrder.vehicle?.plate,
-      services: workOrder.services?.map((service: any) => ({
+      workOrderId: wo.id,
+      totalAmount: wo.totalAmount,
+      customerName: wo.customer?.name,
+      vehiclePlate: wo.vehicle?.plate,
+      services: wo.services?.map((service) => ({
         serviceName: service.serviceName,
         quantity: service.quantity,
         totalPrice: service.totalPrice,
       })),
-      parts: workOrder.parts?.map((part: any) => ({
+      parts: wo.parts?.map((part) => ({
         partName: part.partName,
         quantity: part.quantity,
         totalPrice: part.totalPrice,
@@ -53,7 +67,7 @@ export class EmailTemplatesUtil {
 
   private static getBaseTemplate(
     config: EmailTemplateConfig,
-    data: EmailTemplateData,
+    _data: EmailTemplateData,
   ): string {
     return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">

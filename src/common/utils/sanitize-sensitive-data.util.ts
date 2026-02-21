@@ -15,53 +15,53 @@ const SENSITIVE_FIELDS = [
   'apiKey',
   'api_key',
   'authorization',
-] as const
+] as const;
 
-const MASK_CHAR = '*'
+const MASK_CHAR = '*';
 
 function maskString(value: string, visibleStart = 2, visibleEnd = 2): string {
   if (!value || value.length <= visibleStart + visibleEnd) {
-    return MASK_CHAR.repeat(value?.length || 0)
+    return MASK_CHAR.repeat(value?.length || 0);
   }
-  const start = value.substring(0, visibleStart)
-  const end = value.substring(value.length - visibleEnd)
-  const masked = MASK_CHAR.repeat(value.length - visibleStart - visibleEnd)
-  return `${start}${masked}${end}`
+  const start = value.substring(0, visibleStart);
+  const end = value.substring(value.length - visibleEnd);
+  const masked = MASK_CHAR.repeat(value.length - visibleStart - visibleEnd);
+  return `${start}${masked}${end}`;
 }
 
 function maskDocument(document: string): string {
-  const cleaned = document.replace(/\D/g, '')
+  const cleaned = document.replace(/\D/g, '');
   if (cleaned.length === 11) {
-    return `${cleaned.substring(0, 3)}.***.***-${cleaned.substring(9)}`
+    return `${cleaned.substring(0, 3)}.***.***-${cleaned.substring(9)}`;
   } else if (cleaned.length === 14) {
-    return `${cleaned.substring(0, 2)}.${cleaned.substring(2, 5)}.***/${cleaned.substring(8, 12)}-${cleaned.substring(12)}`
+    return `${cleaned.substring(0, 2)}.${cleaned.substring(2, 5)}.***/${cleaned.substring(8, 12)}-${cleaned.substring(12)}`;
   }
-  return maskString(document, 2, 2)
+  return maskString(document, 2, 2);
 }
 
 function maskEmail(email: string): string {
-  const [user, domain] = email.split('@')
-  if (!domain) return maskString(email, 2, 2)
-  const maskedUser = maskString(user, 2, 0)
-  return `${maskedUser}@${domain}`
+  const [user, domain] = email.split('@');
+  if (!domain) return maskString(email, 2, 2);
+  const maskedUser = maskString(user, 2, 0);
+  return `${maskedUser}@${domain}`;
 }
 
 function maskPhone(phone: string): string {
-  const cleaned = phone.replace(/\D/g, '')
+  const cleaned = phone.replace(/\D/g, '');
   if (cleaned.length >= 10) {
-    const ddd = cleaned.substring(0, 2)
-    const lastDigits = cleaned.substring(cleaned.length - 2)
-    return `(${ddd}) *****-${lastDigits}`
+    const ddd = cleaned.substring(0, 2);
+    const lastDigits = cleaned.substring(cleaned.length - 2);
+    return `(${ddd}) *****-${lastDigits}`;
   }
-  return maskString(phone, 2, 2)
+  return maskString(phone, 2, 2);
 }
 
-function sanitizeValue(fieldName: string, value: any): any {
+function sanitizeValue(fieldName: string, value: unknown): unknown {
   if (value === null || value === undefined) {
-    return value
+    return value;
   }
 
-  const lowerFieldName = fieldName.toLowerCase()
+  const lowerFieldName = fieldName.toLowerCase();
 
   if (typeof value === 'string') {
     if (
@@ -69,16 +69,16 @@ function sanitizeValue(fieldName: string, value: any): any {
       lowerFieldName === 'cpf' ||
       lowerFieldName === 'cnpj'
     ) {
-      return maskDocument(value)
+      return maskDocument(value);
     }
     if (lowerFieldName.includes('email')) {
-      return maskEmail(value)
+      return maskEmail(value);
     }
     if (
       lowerFieldName.includes('phone') ||
       lowerFieldName.includes('telefone')
     ) {
-      return maskPhone(value)
+      return maskPhone(value);
     }
     if (
       lowerFieldName.includes('password') ||
@@ -87,41 +87,41 @@ function sanitizeValue(fieldName: string, value: any): any {
       lowerFieldName.includes('secret') ||
       lowerFieldName.includes('key')
     ) {
-      return MASK_CHAR.repeat(8)
+      return MASK_CHAR.repeat(8);
     }
   }
 
-  return value
+  return value;
 }
 
 function isSensitiveField(fieldName: string): boolean {
-  const lowerFieldName = fieldName.toLowerCase()
-  return SENSITIVE_FIELDS.some((field) => lowerFieldName.includes(field))
+  const lowerFieldName = fieldName.toLowerCase();
+  return SENSITIVE_FIELDS.some((field) => lowerFieldName.includes(field));
 }
 
-export function sanitizeSensitiveData(data: any): any {
+export function sanitizeSensitiveData(data: unknown): unknown {
   if (data === null || data === undefined) {
-    return data
+    return data;
   }
 
   if (typeof data !== 'object') {
-    return data
+    return data;
   }
 
   if (Array.isArray(data)) {
-    return data.map((item) => sanitizeSensitiveData(item))
+    return data.map((item) => sanitizeSensitiveData(item));
   }
 
-  const sanitized: any = {}
-  for (const [key, value] of Object.entries(data)) {
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
     if (isSensitiveField(key)) {
-      sanitized[key] = sanitizeValue(key, value)
+      sanitized[key] = sanitizeValue(key, value);
     } else if (typeof value === 'object' && value !== null) {
-      sanitized[key] = sanitizeSensitiveData(value)
+      sanitized[key] = sanitizeSensitiveData(value);
     } else {
-      sanitized[key] = value
+      sanitized[key] = value;
     }
   }
 
-  return sanitized
+  return sanitized;
 }
