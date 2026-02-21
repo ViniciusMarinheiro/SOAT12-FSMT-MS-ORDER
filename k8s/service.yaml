@@ -3,10 +3,10 @@ kind: Service
 metadata:
   name: order-service
 spec:
-  type: ClusterIP # Apenas interno (segurança padrão)
+  type: LoadBalancer # 👈 Mudou aqui
   selector:
     app: order-service
   ports:
     - protocol: TCP
-      port: 80      # Porta exposta para o cluster
-      targetPort: 3000 # 
+      port: 80
+      targetPort: 3000
