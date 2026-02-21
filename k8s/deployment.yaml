@@ -5,7 +5,7 @@ metadata:
   labels:
     app: order-service
 spec:
-  replicas: 1 # 👈 Mudamos para 1
+  replicas: 1
   selector:
     matchLabels:
       app: order-service
@@ -19,11 +19,39 @@ spec:
         image: soat12acr.azurecr.io/oficina-order:latest 
         ports:
         - containerPort: 3000
-        # 👇 Apagamos o bloco 'resources' daqui
         env:
+        # ------------------------------------------------
+        # 1. BANCO DE DADOS (Exatamente os dados fornecidos)
+        # ------------------------------------------------
+        - name: DB_HOST
+          value: "soat12-postgres-fsmt.postgres.database.azure.com"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USERNAME
+          value: "postgres"
+        - name: DB_PASSWORD
+          value: "vD3WTW0gGmahJdjCfXHG"
+        - name: DB_DATABASE
+          value: "oficina_db" # Nome do banco lógico conforme seu docker-compose
+        - name: DB_SCHEMA
+          value: "public"
+
+        # ------------------------------------------------
+        # 2. MENSAGERIA E APLICAÇÃO
+        # ------------------------------------------------
         - name: NODE_ENV
           value: "production"
-        - name: DATABASE_URL
-          value: "postgresql://postgres:vD3WTW0gGmahJdjCfXHG@soat12-postgres-fsmt.postgres.database.azure.com:5432/order_db"
+        - name: PORT
+          value: "3000"
+        - name: DOCUMENTATION_PREFIX
+          value: "api/v1/orders"
         - name: RABBITMQ_URL
-          value: "amqp://rabbitmq-service:5672"
+          value: "amqp://guest:guest@rabbitmq-service:5672"
+          
+        # ------------------------------------------------
+        # 3. SEGURANÇA (Obrigatório para o NestJS iniciar)
+        # ------------------------------------------------
+        - name: JWT_SECRET
+          value: "508e703c81a194c84a9895bd04362f504b33d8366a2f371cc0d346074fa6e7697c8f2e9d2df38ac8edb86f4935a45037053f16821d1667d6c3d8afaf082f366f"
+        - name: JWT_EXPIRES_IN
+          value: "7d"
